@@ -173,6 +173,18 @@ local inside_spawn = function(pos, radius)
 	return false
 end
 
+local function inside_area(pos, center, radius)
+
+	if pos.x < center.x + radius
+	and pos.x > center.x - radius
+	and pos.y < center.y + radius
+	and pos.y > center.y - radius
+	and pos.z < center.z + radius
+	and pos.z > center.z - radius then
+		return true
+	end
+	return false
+end
 
 -- Infolevel:
 -- 0 for no info
@@ -198,17 +210,30 @@ protector.can_dig = function(r, pos, digger, onlyowner, infolevel)
 	-- is spawn area protected ?
 	---------------------------------- Joe
 	if inside_spawn(pos, protector_spawn) and 
-		digger ~= "max" and 
-		digger ~= "Boril" and 
-		digger ~= "felix" then
-	---------------------------------- Joe
+		digger ~= "maxx" and 
+		digger ~= "sebastian" and 
+		digger ~= "ds16" and 
+		digger ~= "felix7" then
 
-		minetest.chat_send_player(digger,
-			S("Spawn @1 has been protected up to a @2 block radius.",
-				minetest.pos_to_string(statspawn), protector_spawn))
+		minetest.chat_send_player(digger, S("This area is protected."))
 
 		return false
 	end
+
+  local center = {x = 2230, y = 0, z = 900}
+  local newradius = 104
+	if inside_area(pos, center, newradius) and 
+		digger ~= "Thomas-S" and 
+		digger ~= "maxx" and 
+		digger ~= "sebastian" and 
+		digger ~= "ds16" and 
+		digger ~= "Smok" and 
+		digger ~= "felix7" then
+
+		minetest.chat_send_player(digger, S("The spawn area is protected."))
+		return false
+	end
+	---------------------------------- Joe
 
 	-- find the protector nodes
 	local posses = minetest.find_nodes_in_area(
@@ -281,10 +306,9 @@ local old_is_protected = minetest.is_protected
 function minetest.is_protected(pos, digger)
 
 	digger = digger or "" -- nil check
-
+	
 	-- is area protected against digger?
 	if not protector.can_dig(protector_radius, pos, digger, false, 1) then
-
 		local player = minetest.get_player_by_name(digger)
 
 		if player and player:is_player() then
@@ -443,7 +467,9 @@ minetest.register_node("protector:protect", {
 	after_destruct = function(pos, oldnode)
 		local objects = minetest.get_objects_inside_radius(pos, 0.5)
 		for _, v in ipairs(objects) do
-			v:remove()
+			if v:get_entity_name() == "protector:display" then
+				v:remove()
+			end
 		end
 	end,
 })
@@ -452,7 +478,7 @@ minetest.register_craft({
 	output = "protector:protect",
 	recipe = {
 		{"default:stone", "default:stone", "default:stone"},
-		{"default:stone", "default:tin_ingot", "default:stone"},
+		{"default:stone", "default:gold_ingot", "default:stone"},
 		{"default:stone", "default:stone", "default:stone"},
 	}
 })
@@ -534,7 +560,9 @@ minetest.register_node("protector:protect2", {
 	after_destruct = function(pos, oldnode)
 		local objects = minetest.get_objects_inside_radius(pos, 0.5)
 		for _, v in ipairs(objects) do
-			v:remove()
+			if v:get_entity_name() == "protector:display" then
+				v:remove()
+			end
 		end
 	end,
 })
@@ -626,7 +654,9 @@ minetest.register_node("protector:protect3", {
 	after_destruct = function(pos, oldnode)
 		local objects = minetest.get_objects_inside_radius(pos, 0.5)
 		for _, v in ipairs(objects) do
-			v:remove()
+			if v:get_entity_name() == "protector:display" then
+				v:remove()
+			end
 		end
 	end,
 })

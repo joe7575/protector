@@ -3,6 +3,7 @@ local S = protector.intllib
 local radius = (tonumber(minetest.setting_get("protector_radius")) or 8)
 local hud = {}
 local hud_timer = 0
+local has_sections = minetest.global_exists("sections")
 
 minetest.register_globalstep(function(dtime)
 
@@ -30,6 +31,11 @@ minetest.register_globalstep(function(dtime)
 			local nodeowner = meta:get_string("owner")
 
 			hud_text = S("Owner: @1", nodeowner)
+		elseif has_sections then
+			local nodeowner = sections.get_owner(pos)
+			if nodeowner then
+				hud_text = S("Owner: @1", nodeowner)
+			end
 		end
 
 		if not hud[name] then
