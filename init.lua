@@ -22,6 +22,9 @@ local protector_spawn = tonumber(minetest.settings:get("protector_spawn")
 local statspawn = minetest.string_to_pos(minetest.settings:get("static_spawnpoint"))
 		or {x = 825, y = 21, z = -293}
 
+local superminers = {}
+local miniminers = {}
+
 
 -- return list of members as a table
 local get_member_list = function(meta)
@@ -45,11 +48,12 @@ end
 
 
 -- check for member name
-local is_member = function (meta, name)
-
+local is_member = function (meta, name, ignore_priv_groups)
 	for _, n in pairs(get_member_list(meta)) do
-
-		if n == name then
+		if n == name or (
+			not ignore_priv_groups and
+			(n == ":superminer" and superminers[name]) or (n == ":miniminer" and miniminers[name])
+		) then
 			return true
 		end
 	end
@@ -67,8 +71,8 @@ local add_member = function(meta, name)
 	end
 
 	-- does name already exist?
-	if is_owner(meta, name)
-	or is_member(meta, name) then
+	-- Allow to add owner as member. This is particularly useful when using the owner tool to add oneself as member.
+	if is_member(meta, name, true) then
 		return
 	end
 
@@ -209,27 +213,14 @@ protector.can_dig = function(r, pos, digger, onlyowner, infolevel)
 
 	-- is spawn area protected ?
 	---------------------------------- Joe
-	if inside_spawn(pos, protector_spawn) and 
-		digger ~= "maxx" and 
-		digger ~= "sebastian" and 
-		digger ~= "ds16" and 
-		digger ~= "felix7" then
-
+	if inside_spawn(pos, protector_spawn) and not superminers[digger] then
 		minetest.chat_send_player(digger, S("This area is protected."))
-
 		return false
 	end
 
   local center = {x = 2230, y = 0, z = 900}
   local newradius = 104
-	if inside_area(pos, center, newradius) and 
-		digger ~= "Thomas-S" and 
-		digger ~= "maxx" and 
-		digger ~= "sebastian" and 
-		digger ~= "ds16" and 
-		digger ~= "Smok" and 
-		digger ~= "felix7" then
-
+	if inside_area(pos, center, newradius) and not superminers[digger] then
 		minetest.chat_send_player(digger, S("The spawn area is protected."))
 		return false
 	end
@@ -792,6 +783,33 @@ minetest.register_node("protector:display_node", {
 	drop = "",
 })
 
+-- Cache players with special privs
+minetest.register_on_joinplayer(function(player)
+	local name = player:get_player_name()
+
+	local privs = minetest.get_player_privs(name)
+	if privs.superminer then
+		superminers[name] = true
+	elseif superminers[name] then
+		superminers[name] = nil
+	end
+	if privs.miniminer then
+		miniminers[name] = true
+	elseif miniminers[name] then
+		miniminers[name] = nil
+	end
+end)
+
+minetest.register_on_leaveplayer(function(player)
+	local name = player:get_player_name()
+
+	if superminers[name] then
+		superminers[name] = nil
+	end
+	if miniminers[name] then
+		miniminers[name] = nil
+	end
+end)
 
 dofile(MP .. "/doors_chest.lua")
 dofile(MP .. "/pvp.lua")
