@@ -230,7 +230,7 @@ protector.can_dig = function(r, pos, digger, onlyowner, infolevel)
 	local posses = minetest.find_nodes_in_area(
 		{x = pos.x - r, y = pos.y - r, z = pos.z - r},
 		{x = pos.x + r, y = pos.y + r, z = pos.z + r},
-		{"protector:protect", "protector:protect2", "protector:protect3"})
+		{"protector:protect", "protector:protect2", "protector:protect_hidden", "protector:protect3"})
 
 	local meta, owner, members
 
@@ -291,53 +291,62 @@ protector.can_dig = function(r, pos, digger, onlyowner, infolevel)
 end
 
 
+-- add protector hurt and flip to protection violation function
+minetest.register_on_protection_violation(function(pos, name)
+
+	local player = minetest.get_player_by_name(name)
+
+	if player and player:is_player() then
+
+		-- hurt player if protection violated
+		if protector_hurt > 0 and player:get_hp() > 0 then
+
+			-- This delay fixes item duplication bug (thanks luk3yx)
+			minetest.after(0.1, function(player)
+				player:set_hp(player:get_hp() - protector_hurt)
+			end, player)
+		end
+
+		-- flip player when protection violated
+		if protector_flip then
+
+			-- yaw + 180°
+			local yaw = player:get_look_horizontal() + math.pi
+
+			if yaw > 2 * math.pi then
+				yaw = yaw - 2 * math.pi
+			end
+
+			player:set_look_horizontal(yaw)
+
+			-- invert pitch
+			player:set_look_vertical(-player:get_look_vertical())
+
+			-- if digging below player, move up to avoid falling through hole
+			local pla_pos = player:get_pos()
+
+			if pos.y < pla_pos.y then
+
+				player:set_pos({
+					x = pla_pos.x,
+					y = pla_pos.y + 0.8,
+					z = pla_pos.z
+				})
+			end
+		end
+	end
+end)
+
+
 local old_is_protected = minetest.is_protected
 
 -- check for protected area, return true if protected and digger isn't on list
 function minetest.is_protected(pos, digger)
 
 	digger = digger or "" -- nil check
-	
+
 	-- is area protected against digger?
 	if not protector.can_dig(protector_radius, pos, digger, false, 1) then
-		local player = minetest.get_player_by_name(digger)
-
-		if player and player:is_player() then
-
-			-- hurt player if protection violated
-			if protector_hurt > 0 and player:get_hp() > 0 then
-				player:set_hp(player:get_hp() - protector_hurt)
-			end
-
-			-- flip player when protection violated
-			if protector_flip then
-
-				-- yaw + 180°
-				local yaw = player:get_look_horizontal() + math.pi
-
-				if yaw > 2 * math.pi then
-					yaw = yaw - 2 * math.pi
-				end
-
-				player:set_look_horizontal(yaw)
-
-				-- invert pitch
-				player:set_look_vertical(-player:get_look_vertical())
-
-				-- if digging below player, move up to avoid falling through hole
-				local pla_pos = player:get_pos()
-
-				if pos.y < pla_pos.y then
-
-					player:set_pos({
-						x = pla_pos.x,
-						y = pla_pos.y + 0.8,
-						z = pla_pos.z
-					})
-				end
-			end
-		end
-
 		return true
 	end
 
@@ -379,6 +388,20 @@ local check_overlap = function(itemstack, placer, pointed_thing)
 
 end
 
+
+-- remove protector display entities
+local del_display = function(pos)
+
+	local objects = minetest.get_objects_inside_radius(pos, 0.5)
+
+	for _, v in ipairs(objects) do
+
+		if v and v:get_luaentity()
+		and v:get_luaentity().name == "protector:display" then
+			v:remove()
+		end
+	end
+end
 
 -- temporary pos store
 local player_pos = {}
@@ -422,7 +445,8 @@ minetest.register_node("protector:protect", {
 			return
 		end
 
-		protector.can_dig(protector_radius, pointed_thing.under, user:get_player_name(), false, 2)
+		protector.can_dig(protector_radius, pointed_thing.under,
+				user:get_player_name(), false, 2)
 	end,
 
 	on_rightclick = function(pos, node, clicker, itemstack)
@@ -455,14 +479,7 @@ minetest.register_node("protector:protect", {
 
 	on_blast = function() end,
 
-	after_destruct = function(pos, oldnode)
-		local objects = minetest.get_objects_inside_radius(pos, 0.5)
-		for _, v in ipairs(objects) do
-			if v:get_entity_name() == "protector:display" then
-				v:remove()
-			end
-		end
-	end,
+	after_destruct = del_display
 })
 
 minetest.register_craft({
@@ -483,6 +500,7 @@ minetest.register_node("protector:protect2", {
 	inventory_image = "protector_logo.png",
 	sounds = default.node_sound_stone_defaults(),
 	groups = {dig_immediate = 2, unbreakable = 1},
+	use_texture_alpha = "clip",
 	paramtype = "light",
 	paramtype2 = "wallmounted",
 	legacy_wallmounted = true,
@@ -515,7 +533,8 @@ minetest.register_node("protector:protect2", {
 			return
 		end
 
-		protector.can_dig(protector_radius, pointed_thing.under, user:get_player_name(), false, 2)
+		protector.can_dig(protector_radius, pointed_thing.under,
+				user:get_player_name(), false, 2)
 	end,
 
 	on_rightclick = function(pos, node, clicker, itemstack)
@@ -548,27 +567,18 @@ minetest.register_node("protector:protect2", {
 
 	on_blast = function() end,
 
-	after_destruct = function(pos, oldnode)
-		local objects = minetest.get_objects_inside_radius(pos, 0.5)
-		for _, v in ipairs(objects) do
-			if v:get_entity_name() == "protector:display" then
-				v:remove()
-			end
-		end
-	end,
+	after_destruct = del_display
 })
 
 -- recipes to switch between protectors
 minetest.register_craft({
-	type = "shapeless",
 	output = "protector:protect",
-	recipe = {"protector:protect2"}
+	recipe = {{"protector:protect2"}}
 })
 
 minetest.register_craft({
-	type = "shapeless",
 	output = "protector:protect2",
-	recipe = {"protector:protect"}
+	recipe = {{"protector:protect"}}
 })
 
 minetest.register_node("protector:protect3", {
@@ -756,7 +766,7 @@ minetest.register_entity("protector:display", {
 local x = protector_radius
 minetest.register_node("protector:display_node", {
 	tiles = {"protector_display.png"},
-	use_texture_alpha = true,
+	use_texture_alpha = "clip", -- true,
 	walkable = false,
 	drawtype = "nodebox",
 	node_box = {

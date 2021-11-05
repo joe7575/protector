@@ -23,7 +23,7 @@ minetest.register_globalstep(function(dtime)
 		local protectors = minetest.find_nodes_in_area(
 			{x = pos.x - radius , y = pos.y - radius , z = pos.z - radius},
 			{x = pos.x + radius , y = pos.y + radius , z = pos.z + radius},
-			{"protector:protect","protector:protect2", "protector:protect3"})
+			{"protector:protect","protector:protect2", "protector:protect_hidden", "protector:protect3"})
 
 		if #protectors > 0 then
 			local npos = protectors[1]
@@ -54,9 +54,7 @@ minetest.register_globalstep(function(dtime)
 			})
 
 			return
-
 		else
-
 			player:hud_change(hud[name].id, "text", hud_text)
 		end
 	end

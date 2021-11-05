@@ -19,7 +19,7 @@ minetest.register_craftitem("protector:tool", {
 		local pos = user:get_pos()
 		local pp = minetest.find_nodes_in_area(
 			vector.subtract(pos, 2), vector.add(pos, 2),
-			{"protector:protect", "protector:protect2", "protector:protect3"})
+			{"protector:protect", "protector:protect2", "protector:protect_hidden", "protector:protect3"})
 
 		if #pp == 0 then return end -- none found
 
@@ -33,13 +33,13 @@ minetest.register_craftitem("protector:tool", {
 		local dir = minetest.dir_to_facedir( user:get_look_dir() )
 		local vec = {x = 0, y = 0, z = 0}
 		local gap = (r * 2) + 1
-		local pit =  user:get_look_pitch()
+		local pit =  user:get_look_vertical()
 
 		-- set placement coords
 		if pit > 1.2 then
-			vec.y = gap -- up
+			vec.y = -gap -- up
 		elseif pit < -1.2 then
-			vec.y = -gap -- down
+			vec.y = gap -- down
 		elseif dir == 0 then
 			vec.z = gap -- north
 		elseif dir == 1 then
@@ -67,10 +67,15 @@ minetest.register_craftitem("protector:tool", {
 		-- does a protector already exist ?
 		if #minetest.find_nodes_in_area(
 			vector.subtract(pos, 1), vector.add(pos, 1),
-			{"protector:protect", "protector:protect2", "protector:protect3"}) > 0 then
+			{"protector:protect", "protector:protect2", "protector:protect_hidden", "protector:protect3"}) > 0 then
 
 			minetest.chat_send_player(name, S("Protector already in place!"))
 
+			return
+		end
+
+		-- do not place protector out of map bounds
+		if minetest.find_node_near(pos, 1, {"ignore"}) then
 			return
 		end
 
