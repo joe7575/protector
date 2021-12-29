@@ -1,0 +1,2 @@
+# Spawn size (1..n)
+protector_spawn (protected spawn size) int 42

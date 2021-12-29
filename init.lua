@@ -15,12 +15,12 @@ local protector_max_share_count = 12
 local protector_radius = tonumber(minetest.settings:get("protector_radius")) or 8
 local protector_flip = minetest.settings:get_bool("protector_flip") or false
 local protector_hurt = tonumber(minetest.settings:get("protector_hurt")) or 0
-local protector_spawn = tonumber(minetest.settings:get("protector_spawn")
-	or minetest.settings:get("protector_pvp_spawn")) or 42
 
--- get static spawn position
-local statspawn = minetest.string_to_pos(minetest.settings:get("static_spawnpoint"))
-		or {x = 825, y = 21, z = -293}
+
+------------------------------------------ Joe Spawn2 Area (ols spawn)
+local protector_spawn = 42
+local statspawn = {x = 825, y = 21, z = -293}
+------------------------------------------ Joe Spawn2 Area (ols spawn)
 
 local superminers = {}
 local miniminers = {}
@@ -168,7 +168,7 @@ local inside_spawn = function(pos, radius)
 	and pos.x > statspawn.x - radius
 	and pos.y < statspawn.y + radius
 	and pos.y > statspawn.y - radius
-	and pos.z < statspawn.z + radius + (253 - 171) -- offset zum Meer Joe
+	and pos.z < statspawn.z + radius + 12 -- offset Richtung Meer Joe
 	and pos.z > statspawn.z - radius then
 
 		return true
@@ -354,6 +354,20 @@ function minetest.is_protected(pos, digger)
 	return old_is_protected(pos, digger)
 end
 
+------------------------------------------------ Joe
+local function get_owner(pos)
+	local protectors = minetest.find_nodes_in_area(
+		{x = pos.x - protector_radius , y = pos.y - protector_radius , z = pos.z - protector_radius},
+		{x = pos.x + protector_radius , y = pos.y + protector_radius , z = pos.z + protector_radius},
+		{"protector:protect","protector:protect2", "protector:protect_hidden", "protector:protect3"})
+
+	if #protectors > 0 then
+		local npos = protectors[1]
+		local meta = minetest.get_meta(npos)
+		return meta:get_string("owner")
+	end
+end
+------------------------------------------------ Joe
 
 -- make sure protection block doesn't overlap another protector's area
 local check_overlap = function(itemstack, placer, pointed_thing)
@@ -377,7 +391,19 @@ local check_overlap = function(itemstack, placer, pointed_thing)
 
 	-- make sure protector doesn't overlap any other player's area
 	if not protector.can_dig(protector_radius * 2, pos, name, true, 3) then
-
+		------------------------------------------------ Joe
+		local superminer = minetest.get_player_privs(name).superminer
+		if superminer then
+			local owner = get_owner(pos)
+			if owner then
+				local itemstack, position = minetest.item_place(itemstack, placer, pointed_thing)
+				local meta = minetest.get_meta(pos)
+				meta:set_string("owner", owner)
+				meta:set_string("infotext", S("Protection (owned by @1)", owner))
+				return itemstack, position
+			end
+		end
+		------------------------------------------------ Joe
 		minetest.chat_send_player(name,
 			S("Overlaps into above players protected area"))
 
