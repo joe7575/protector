@@ -29,8 +29,7 @@ minetest.register_chatcommand("protector_remove", {
 		end
 
 		removal_names = param
-
-	end,
+	end
 })
 
 
@@ -64,8 +63,7 @@ minetest.register_chatcommand("protector_replace", {
 		end
 
 		replace_names = param
-
-	end,
+	end
 })
 
 
@@ -106,7 +104,6 @@ minetest.register_abm({
 				meta:set_string("owner", names[2])
 				meta:set_string("infotext", S("Protection (owned by @1)", names[2]))
 			end
-
 		end
 	end
 })
@@ -185,7 +182,6 @@ minetest.register_chatcommand("protector_show", {
 		end
 
 		local pos = player:get_pos()
-		local r = 24
 
 		local a = minetest.find_nodes_in_area(
 			{x = pos.x - r, y = pos.y - r, z = pos.z - r},
@@ -221,7 +217,6 @@ minetest.register_chatcommand("protector_hide", {
 		end
 
 		local pos = player:get_pos()
-		local r = 24
 
 		local a = minetest.find_nodes_in_area(
 			{x = pos.x - r, y = pos.y - r, z = pos.z - r},

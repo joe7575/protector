@@ -166,7 +166,7 @@ local inside_spawn = function(pos, radius)
 
 	if pos.x < statspawn.x + radius
 	and pos.x > statspawn.x - radius
-	and pos.y < statspawn.y + radius
+	--and pos.y < statspawn.y + radius
 	and pos.y > statspawn.y - radius
 	and pos.z < statspawn.z + radius + 12 -- offset Richtung Meer Joe
 	and pos.z > statspawn.z - radius then
@@ -181,7 +181,7 @@ local function inside_area(pos, center, radius)
 
 	if pos.x < center.x + radius
 	and pos.x > center.x - radius
-	and pos.y < center.y + radius
+	--and pos.y < center.y + radius
 	and pos.y > center.y - radius
 	and pos.z < center.z + radius
 	and pos.z > center.z - radius then
@@ -396,11 +396,12 @@ local check_overlap = function(itemstack, placer, pointed_thing)
 		if superminer then
 			local owner = get_owner(pos)
 			if owner then
-				local itemstack, position = minetest.item_place(itemstack, placer, pointed_thing)
+				minetest.set_node(pos, {name = itemstack:get_name(), param2 = 0})
 				local meta = minetest.get_meta(pos)
 				meta:set_string("owner", owner)
 				meta:set_string("infotext", S("Protection (owned by @1)", owner))
-				return itemstack, position
+				itemstack:set_count(itemstack:get_count() - 1)
+				return itemstack, pos
 			end
 		end
 		------------------------------------------------ Joe

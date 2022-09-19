@@ -1,6 +1,7 @@
 
 local S = protector.intllib
-local radius = (tonumber(minetest.setting_get("protector_radius")) or 8)
+local radius = (tonumber(minetest.settings:get("protector_radius")) or 8)
+
 local hud = {}
 local hud_timer = 0
 local has_sections = minetest.global_exists("sections")
@@ -46,11 +47,11 @@ minetest.register_globalstep(function(dtime)
 				hud_elem_type = "text",
 				name = "Protector Area",
 				number = 0xFFFF22,
-				position = {x=0, y=0.95},
-				offset = {x=8, y=-8},
+				position = {x = 0, y = 0.95},
+				offset = {x = 8, y = -8},
 				text = hud_text,
-				scale = {x=200, y=60},
-				alignment = {x=1, y=-1},
+				scale = {x = 200, y = 60},
+				alignment = {x = 1, y = -1},
 			})
 
 			return
