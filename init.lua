@@ -214,7 +214,7 @@ protector.can_dig = function(r, pos, digger, onlyowner, infolevel)
 	-- is spawn area protected ?
 	---------------------------------- Joe
 	if inside_spawn(pos, protector_spawn) and not superminers[digger] then
-		minetest.chat_send_player(digger, S("This area is protected."))
+		minetest.chat_send_player(digger, S("The spawn area is protected."))
 		return false
 	end
 
@@ -356,9 +356,10 @@ end
 
 ------------------------------------------------ Joe
 local function get_owner(pos)
+	local radius = protector_radius * 1.5
 	local protectors = minetest.find_nodes_in_area(
-		{x = pos.x - protector_radius , y = pos.y - protector_radius , z = pos.z - protector_radius},
-		{x = pos.x + protector_radius , y = pos.y + protector_radius , z = pos.z + protector_radius},
+		{x = pos.x - radius , y = pos.y - radius , z = pos.z - radius},
+		{x = pos.x + radius , y = pos.y + radius , z = pos.z + radius},
 		{"protector:protect","protector:protect2", "protector:protect_hidden", "protector:protect3"})
 
 	if #protectors > 0 then
